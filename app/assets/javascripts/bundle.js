@@ -48,7 +48,7 @@
 	var ReactDOM = __webpack_require__(158);
 	var BenchStore = __webpack_require__(159);
 	var ApiUtil = __webpack_require__(181);
-	var Search = __webpack_require__(184);
+	var Search = __webpack_require__(183);
 	
 	// var JurajComponent = React.createClass({
 	//   render: function() {
@@ -19675,7 +19675,7 @@
 	var resetBenches = function (benches) {
 	  _benches = benches;
 	};
-	
+	window.BenchStore = BenchStore;
 	module.exports = BenchStore;
 
 /***/ },
@@ -26377,9 +26377,10 @@
 	var ApiActions = __webpack_require__(182);
 	
 	var ApiUtil = {
-	  fetchBenches: function () {
+	  fetchBenches: function (bounds) {
 	    $.ajax({
 	      url: "api/benches",
+	      data: { bounds },
 	      success: function (benches) {
 	        ApiActions.receiveAll(benches);
 	      }
@@ -26412,6 +26413,29 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	var React = __webpack_require__(1);
+	var Index = __webpack_require__(184);
+	var Map = __webpack_require__(185);
+	
+	var Search = React.createClass({
+	  displayName: 'Search',
+	
+	  render: function () {
+	    return React.createElement(
+	      'div',
+	      null,
+	      React.createElement(Index, null),
+	      React.createElement(Map, null)
+	    );
+	  }
+	});
+	
+	module.exports = Search;
+
+/***/ },
+/* 184 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var React = __webpack_require__(1);
 	var BenchStore = __webpack_require__(159);
 	var ApiUtil = __webpack_require__(181);
 	
@@ -26428,7 +26452,7 @@
 	
 	  componentDidMount: function () {
 	    this.benchUpdater = BenchStore.addListener(this.updateBenches);
-	    ApiUtil.fetchBenches();
+	    // ApiUtil.fetchBenches();
 	  },
 	
 	  componentWillUnmount: function () {
@@ -26447,45 +26471,51 @@
 	module.exports = Index;
 
 /***/ },
-/* 184 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var React = __webpack_require__(1);
-	var Index = __webpack_require__(183);
-	var Map = __webpack_require__(185);
-	
-	var Search = React.createClass({
-	  displayName: 'Search',
-	
-	  render: function () {
-	    return React.createElement(
-	      'div',
-	      null,
-	      React.createElement(Map, null),
-	      React.createElement(Index, null)
-	    );
-	  }
-	});
-	
-	module.exports = Search;
-
-/***/ },
 /* 185 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var React = __webpack_require__(1);
 	var ReactDOM = __webpack_require__(158);
+	var BenchStore = __webpack_require__(159);
+	var ApiUtil = __webpack_require__(181);
 	
 	var Map = React.createClass({
 	  displayName: 'Map',
 	
+	  updateBenches: function () {
+	    this.benches = BenchStore.all();
+	    // debugger
+	    this.benches.forEach((function (bench, index) {
+	      var marker = new google.maps.Marker({
+	        position: { lat: bench.lat, lng: bench.lng },
+	        map: this.map,
+	        title: bench.description
+	      });
+	    }).bind(this));
+	  },
+	
+	  mapIdle: function () {
+	    var latLng = this.map.getBounds();
+	    var southWest = latLng.getSouthWest();
+	    var northEast = latLng.getNorthEast();
+	    var bounds = {
+	      "northEast": { "lat": northEast.lat(), "lng": northEast.lng() },
+	      "southWest": { "lat": southWest.lat(), "lng": southWest.lng() }
+	    };
+	    // debugger
+	
+	    ApiUtil.fetchBenches(bounds);
+	  },
+	
 	  componentDidMount: function () {
+	    this.BenchListener = BenchStore.addListener(this.updateBenches);
 	    var map = ReactDOM.findDOMNode(this.refs.map);
 	    var mapOptions = {
 	      center: { lat: 37.7758, lng: -122.435 },
 	      zoom: 13
 	    };
 	    this.map = new google.maps.Map(map, mapOptions);
+	    this.map.addListener('idle', this.mapIdle);
 	  },
 	
 	  render: function () {

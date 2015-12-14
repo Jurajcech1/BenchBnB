@@ -20,5 +20,5 @@ BenchStore.__onDispatch = function(payload) {
 var resetBenches = function(benches) {
   _benches = benches;
 };
-
+window.BenchStore = BenchStore;
 module.exports = BenchStore;
