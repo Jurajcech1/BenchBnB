@@ -7,12 +7,13 @@ var Map = React.createClass({
   updateBenches: function(){
     this.benches = BenchStore.all();
     // debugger
+    this.benchMarkers = [];
     this.benches.forEach(function(bench, index) {
-      var marker = new google.maps.Marker({
+      this.benchMarkers.push(new google.maps.Marker({
         position: {lat: bench.lat, lng: bench.lng},
         map: this.map,
         title: bench.description
-      });
+      }));
     }.bind(this));
   },
 
@@ -38,6 +39,9 @@ var Map = React.createClass({
       };
       this.map = new google.maps.Map(map, mapOptions);
       this.map.addListener('idle', this.mapIdle);
+      this.map.addListener('click', function(e) {
+        this.props.clickMapHandler({lat: e.latLng.lat(), lng: e.latLng.lng()});
+      }.bind(this));
     },
 
   render: function() {
